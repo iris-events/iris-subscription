@@ -1,0 +1,19 @@
+name: Generate IRIS models
+on:
+  push:
+    branches:
+      - 'master'
+      - 'main'
+      - '*'
+    tags:
+      - v*
+  workflow_dispatch: null
+jobs:
+  models:
+    name: Generate Java and TS models
+    uses: globalid/.github/.github/workflows/java-iris-publish.yml@master
+    secrets:
+      GHA_BOT_TOKEN: ${{ secrets.GHA_BOT_TOKEN }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -42,8 +42,5 @@ nb-configuration.xml
 # Cache
 .cache
 
-# Models
-/models
-
-# Generated models
+# IRIS models
 models
