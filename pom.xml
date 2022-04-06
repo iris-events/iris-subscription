@@ -22,7 +22,7 @@
     <version.globalid.event-messaging>1.2.11</version.globalid.event-messaging>
     <version.hamcrest-core>2.2</version.hamcrest-core>
     <!-- plugin dependencies -->
-    <asyncapi-schema-generator-maven-plugin.version>1.1.4</asyncapi-schema-generator-maven-plugin.version>
+    <asyncapi-schema-generator-maven-plugin.version>1.1.5</asyncapi-schema-generator-maven-plugin.version>
     <!-- variables -->
     <group-id.globalid.common>id.global.common</group-id.globalid.common>
     <artifact-id.globalid.common>globalid-common</artifact-id.globalid.common>
