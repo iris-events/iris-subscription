@@ -21,8 +21,6 @@
     <version.globalid.common>1.1.8</version.globalid.common>
     <version.globalid.event-messaging>1.2.11</version.globalid.event-messaging>
     <version.hamcrest-core>2.2</version.hamcrest-core>
-    <!-- plugin dependencies -->
-    <asyncapi-schema-generator-maven-plugin.version>1.1.5</asyncapi-schema-generator-maven-plugin.version>
     <!-- variables -->
     <group-id.globalid.common>id.global.common</group-id.globalid.common>
     <artifact-id.globalid.common>globalid-common</artifact-id.globalid.common>
@@ -69,31 +67,4 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>id.global.iris</groupId>
-        <artifactId>asyncapi-schema-generator-maven-plugin</artifactId>
-        <version>${asyncapi-schema-generator-maven-plugin.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate-schema</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <scanDependenciesDisable>true</scanDependenciesDisable>
-          <annotationsArtifacts>
-            <annotationsArtifact>${group-id.globalid.common}:${artifact-id.globalid.common}</annotationsArtifact>
-          </annotationsArtifacts>
-          <excludeFromSchemas>
-            com.fasterxml.jackson.databind.JsonNode,java.util.Map
-          </excludeFromSchemas>
-          <apicurioRegistryUrl>https://schema.internal.globalid.dev/</apicurioRegistryUrl>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>
