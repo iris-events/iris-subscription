@@ -21,9 +21,6 @@
     <version.globalid.common>1.1.8</version.globalid.common>
     <version.globalid.event-messaging>1.2.12</version.globalid.event-messaging>
     <version.hamcrest-core>2.2</version.hamcrest-core>
-    <!-- variables -->
-    <group-id.globalid.common>id.global.common</group-id.globalid.common>
-    <artifact-id.globalid.common>globalid-common</artifact-id.globalid.common>
   </properties>
   <dependencyManagement>
     <dependencies>
