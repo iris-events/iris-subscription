@@ -6,7 +6,7 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import id.global.common.annotations.amqp.MessageHandler;
+import id.global.common.annotations.iris.MessageHandler;
 import id.global.iris.messaging.runtime.context.EventContext;
 import id.global.iris.messaging.runtime.producer.AmqpProducer;
 import id.global.iris.subscription.events.SessionClosed;
