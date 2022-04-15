@@ -83,9 +83,10 @@ public class Consumer {
     public Unsubscribed unsubscribe(final Unsubscribe unsubscribe) {
         log.info("Unsubscribe received: {}", unsubscribe);
         final var sessionId = eventContext.getSessionId().orElse(null);
-        subscriptionManager.unsubscribe(sessionId);
-
-        return new Unsubscribed(unsubscribe.resourceType(), unsubscribe.resourceId());
+        final var resourceType = unsubscribe.resourceType();
+        final var resourceId = unsubscribe.resourceId();
+        subscriptionManager.unsubscribe(sessionId, resourceType, resourceId);
+        return new Unsubscribed(resourceType, resourceId);
     }
 
     @MessageHandler(bindingKeys = "*.resource")
