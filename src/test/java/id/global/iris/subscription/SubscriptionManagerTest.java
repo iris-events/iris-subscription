@@ -9,18 +9,22 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import id.global.iris.subscription.collection.SubscriptionCollection;
+import id.global.iris.subscription.collection.RedisSubscriptionCollection;
 import id.global.iris.subscription.model.Resource;
 import id.global.iris.subscription.model.Subscription;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
 
+@QuarkusTest
 class SubscriptionManagerTest {
     private SubscriptionManager manager;
-    private SubscriptionCollection collection;
+
+    @InjectMock
+    RedisSubscriptionCollection collectionMock;
 
     @BeforeEach
     public void setup() {
-        collection = Mockito.mock(SubscriptionCollection.class);
-        manager = new SubscriptionManager(collection);
+        manager = new SubscriptionManager(collectionMock);
     }
 
     @Test
@@ -34,7 +38,7 @@ class SubscriptionManagerTest {
         manager.addSubscription(subscription);
 
         ArgumentCaptor<Subscription> subscriptionCaptor = ArgumentCaptor.forClass(Subscription.class);
-        Mockito.verify(collection).insert(subscriptionCaptor.capture());
+        Mockito.verify(collectionMock).insert(subscriptionCaptor.capture());
         Subscription value = subscriptionCaptor.getValue();
 
         assertThat(value, is(notNullValue()));
@@ -50,7 +54,7 @@ class SubscriptionManagerTest {
         manager.getSubscriptions(resourceType, resourceId);
 
         ArgumentCaptor<Resource> resourceCaptor = ArgumentCaptor.forClass(Resource.class);
-        Mockito.verify(collection).get(resourceCaptor.capture());
+        Mockito.verify(collectionMock).get(resourceCaptor.capture());
         Resource value = resourceCaptor.getValue();
 
         assertThat(value, is(notNullValue()));
@@ -64,7 +68,7 @@ class SubscriptionManagerTest {
         manager.unsubscribe(sessionId);
 
         ArgumentCaptor<String> sessionIdCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(collection).remove(sessionIdCaptor.capture());
+        Mockito.verify(collectionMock).remove(sessionIdCaptor.capture());
         String value = sessionIdCaptor.getValue();
 
         assertThat(value, is(notNullValue()));
