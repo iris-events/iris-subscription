@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -87,6 +88,55 @@ class SubscriptionCollectionTest {
         assertThat(optionalSubscription2.isPresent(), is(true));
         assertThat(optionalSubscription1.get(), is(subscription1));
         assertThat(optionalSubscription2.get(), is(subscription2));
+    }
+
+    @Test
+    void removeBySessionIdResTypeResId() {
+        // This session will get one of its subscriptions removed
+        final var sessionId = "sessionId";
+        // This session will not have any of its subscriptions removed
+        final var secondSessionId = "secondSessionId";
+        // This session will get all of its subscriptions removed
+        final var thirdSessionId = "sessionId1";
+
+        final var resourceType = "resourceType";
+        final var resourceId = "resourceId";
+
+        final var subscription1 = new Subscription(resourceType, resourceId, sessionId);
+        final var subscription11 = new Subscription(resourceType, resourceId + "1", sessionId);
+        final var subscription2 = new Subscription(resourceType, resourceId, secondSessionId);
+        final var subscription22 = new Subscription(resourceType, resourceId + "1", secondSessionId);
+        final var subscription3 = new Subscription(resourceType, resourceId, thirdSessionId);
+
+        collection.insert(subscription1);
+        collection.insert(subscription11);
+        collection.insert(subscription2);
+        collection.insert(subscription22);
+        collection.insert(subscription3);
+
+        collection.remove(sessionId, resourceType, resourceId);
+        collection.remove(thirdSessionId, resourceType, resourceId);
+
+        final var subsBySessionId = collection.get(sessionId);
+        final var subsByOtherSessionId = collection.get(secondSessionId);
+        final var subsByThirdSessionId = collection.get(thirdSessionId);
+
+        final var optionalBySessionId = subsBySessionId.stream().findFirst();
+
+        assertThat(collection.size(), is(3));
+        assertThat(subsBySessionId.size(), is(1));
+        assertThat(subsByOtherSessionId.size(), is(2));
+        assertThat(optionalBySessionId.isPresent(), is(true));
+        assertThat(optionalBySessionId.get(), is(subscription11));
+
+
+        assertThat(subsBySessionId.contains(subscription1), is(false));
+        assertThat(subsBySessionId.contains(subscription11), is(true));
+
+        assertThat(subsByOtherSessionId.contains(subscription2), is(true));
+        assertThat(subsByOtherSessionId.contains(subscription22), is(true));
+
+        assertThat(subsByThirdSessionId, is(Collections.emptySet()));
     }
 
     @Test

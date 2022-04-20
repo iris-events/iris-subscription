@@ -76,6 +76,37 @@ public class SubscriptionCollection {
     }
 
     /**
+     * Remove subscriptions for the provided sessionId, resourceType and resourceId combination
+     *
+     * @param sessionId
+     * @param resourceType
+     * @param resourceId
+     * */
+    public void remove(String sessionId, String resourceType, String resourceId) {
+        synchronized (this) {
+            final var uniqueResId = getUniqueResId(resourceType, resourceId);
+            final var sessionSubs = sessionIdSubscriptions.get(sessionId);
+            final var resTypeIdSubs = resTypeResIdSubscriptions.get(uniqueResId);
+
+            final var intersect = resTypeIdSubs.stream().distinct().filter(sessionSubs::contains)
+                    .collect(Collectors.toSet());
+
+            sessionSubs.removeAll(intersect);
+            resTypeIdSubs.removeAll(intersect);
+
+            intersect.forEach(subscriptions::remove);
+
+            if (sessionSubs.isEmpty()) {
+                remove(sessionId);
+            }
+            if (resTypeIdSubs.isEmpty()) {
+                final var removed = resTypeResIdSubscriptions.remove(uniqueResId);
+                removeBySubscriptionIDs(removed);
+            }
+        }
+    }
+
+    /**
      * Get the number of all current subscription records
      *
      * @return number of all subscription records
