@@ -102,7 +102,7 @@ public class Consumer {
                 resourceId);
 
         if (subscriptions.isEmpty()) {
-           return;
+            return;
         }
 
         final var channel = channelService.getOrCreateChannelById(CHANNEL_ID);

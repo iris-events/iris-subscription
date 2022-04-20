@@ -8,6 +8,8 @@ import id.global.iris.subscription.model.Resource;
 import id.global.iris.subscription.model.Subscription;
 
 public class SubscriptionCollection {
+    private static final String LOCK_NAMESPACE = "iris-subscription";
+
     private final ConcurrentHashMap<Integer, Subscription> subscriptions;
     private final ConcurrentHashMap<String, Set<Integer>> sessionIdSubscriptions;
     private final ConcurrentHashMap<String, Set<Integer>> resTypeResIdSubscriptions;
@@ -24,11 +26,14 @@ public class SubscriptionCollection {
      * @param subscription subscription record
      */
     public void insert(Subscription subscription) {
-        synchronized (this) {
+        final var sessionId = subscription.sessionId();
+        final var resourceType = subscription.resourceType();
+        final var resourceId = subscription.resourceId();
+        synchronized (getLock(sessionId, resourceType, resourceId)) {
             int subscriptionId = generateSubscriptionId(subscription);
             subscriptions.put(subscriptionId, subscription);
-            addSessionSubscription(subscription.sessionId(), subscriptionId);
-            addResTypeResIdSubscription(subscription.resourceType(), subscription.resourceId(), subscriptionId);
+            addSessionSubscription(sessionId, subscriptionId);
+            addResTypeResIdSubscription(resourceType, resourceId, subscriptionId);
         }
     }
 
@@ -67,7 +72,7 @@ public class SubscriptionCollection {
      * @param sessionId SessionId
      */
     public void remove(String sessionId) {
-        synchronized (this) {
+        synchronized (getLock(sessionId, "", "")) {
             Set<Integer> removedIDs = sessionIdSubscriptions.remove(sessionId);
             if (removedIDs != null) {
                 removeBySubscriptionIDs(removedIDs);
@@ -81,9 +86,9 @@ public class SubscriptionCollection {
      * @param sessionId
      * @param resourceType
      * @param resourceId
-     * */
+     */
     public void remove(String sessionId, String resourceType, String resourceId) {
-        synchronized (this) {
+        synchronized (getLock(sessionId, resourceType, resourceId)) {
             final var uniqueResId = getUniqueResId(resourceType, resourceId);
             final var sessionSubs = sessionIdSubscriptions.get(sessionId);
             final var resTypeIdSubs = resTypeResIdSubscriptions.get(uniqueResId);
@@ -154,5 +159,9 @@ public class SubscriptionCollection {
 
     private int generateSubscriptionId(Subscription subscription) {
         return subscription.hashCode();
+    }
+
+    private String getLock(String sessionId, String resourceType, String resourceId) {
+        return String.format("%s-%s-%s-%s", LOCK_NAMESPACE, sessionId, resourceId, resourceType).intern();
     }
 }
