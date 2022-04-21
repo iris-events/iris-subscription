@@ -80,7 +80,7 @@ class ConsumerTest {
         private static final String RESOURCE_TYPE = "inventory";
         private static final String RESOURCE_ID = "all";
         private static final String EVENT_NAME = "consumer-test-update";
-        String sessionId;
+        private String sessionId;
 
         @BeforeEach
         void beforeEach() {
@@ -131,8 +131,8 @@ class ConsumerTest {
 
         private static final String RESOURCE_TYPE = "inventory";
         private static final String RESOURCE_ID = "all";
-        String sessionId;
-        Subscribe subscribe;
+        private String sessionId;
+        private Subscribe subscribe;
 
         @BeforeEach
         void beforeEach() {
