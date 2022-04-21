@@ -1,5 +1,7 @@
 package id.global.iris.subscription;
 
+import static id.global.common.constants.iris.MessagingHeaders.Message.SUBSCRIPTION_ID;
+
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
@@ -102,14 +104,14 @@ public class Consumer {
                 resourceId);
 
         if (subscriptions.isEmpty()) {
-           return;
+            return;
         }
 
         final var channel = channelService.getOrCreateChannelById(CHANNEL_ID);
         subscriptions.forEach(subscription -> {
             final var amqpBasicProperties = amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(
                     new RoutingDetails(eventName, sessionExchange, ExchangeType.TOPIC, routingKey, Scope.SESSION, null,
-                            subscription.sessionId()));
+                            subscription.sessionId(), subscription.id()));
             try {
                 log.info("Sending message. Exchange = {}, routingKey = {}, amqpBasicProperties = {}, sessionId = {}",
                         sessionExchange, routingKey, amqpBasicProperties, subscription.sessionId());
@@ -121,12 +123,11 @@ public class Consumer {
     }
 
     private void subscribe(final String resourceType, final String resourceId) {
-        subscriptionManager.addSubscription(
-                new Subscription(resourceType,
-                        resourceId,
-                        eventContext.getSessionId().orElse(null)));
+        final var subscription = new Subscription(resourceType, resourceId, eventContext.getSessionId().orElse(null));
+        subscriptionManager.addSubscription(subscription);
 
         final var snapshotRequested = new SnapshotRequested(resourceType, resourceId);
+        eventContext.setHeader(SUBSCRIPTION_ID, subscription.id());
         final var subscribed = new Subscribed(resourceType, resourceId);
         producer.send(subscribed);
         producer.send(snapshotRequested);

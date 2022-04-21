@@ -81,7 +81,7 @@ public class SubscriptionCollection {
      * @param sessionId
      * @param resourceType
      * @param resourceId
-     * */
+     */
     public void remove(String sessionId, String resourceType, String resourceId) {
         synchronized (this) {
             final var uniqueResId = getUniqueResId(resourceType, resourceId);
