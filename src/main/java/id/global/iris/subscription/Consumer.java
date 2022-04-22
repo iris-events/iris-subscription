@@ -1,7 +1,5 @@
 package id.global.iris.subscription;
 
-import static id.global.common.constants.iris.MessagingHeaders.Message.SUBSCRIPTION_ID;
-
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
@@ -127,7 +125,7 @@ public class Consumer {
         subscriptionManager.addSubscription(subscription);
 
         final var snapshotRequested = new SnapshotRequested(resourceType, resourceId);
-        eventContext.setHeader(SUBSCRIPTION_ID, subscription.id());
+        eventContext.setSubscriptionId(subscription.id());
         final var subscribed = new Subscribed(resourceType, resourceId);
         producer.send(subscribed);
         producer.send(snapshotRequested);

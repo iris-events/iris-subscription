@@ -1,12 +1,10 @@
 package id.global.iris.subscription;
 
 import static id.global.common.constants.iris.MessagingHeaders.Message.EVENT_TYPE;
-import static id.global.common.constants.iris.MessagingHeaders.Message.SUBSCRIPTION_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -162,7 +160,7 @@ class ConsumerTest {
             consumer.subscribe(subscribe);
 
             final var subscriptionIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
-            verify(eventContext).setHeader(eq(SUBSCRIPTION_ID), subscriptionIdArgumentCaptor.capture());
+            verify(eventContext).setSubscriptionId(subscriptionIdArgumentCaptor.capture());
             final var subscriptionIdArgumentCaptorValue = subscriptionIdArgumentCaptor.getValue();
             assertThat(subscriptionIdArgumentCaptorValue, is(RESOURCE_TYPE + "-" + RESOURCE_ID));
         }
