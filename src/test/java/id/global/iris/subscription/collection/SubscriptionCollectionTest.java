@@ -129,7 +129,6 @@ class SubscriptionCollectionTest {
         assertThat(optionalBySessionId.isPresent(), is(true));
         assertThat(optionalBySessionId.get(), is(subscription11));
 
-
         assertThat(subsBySessionId.contains(subscription1), is(false));
         assertThat(subsBySessionId.contains(subscription11), is(true));
 
