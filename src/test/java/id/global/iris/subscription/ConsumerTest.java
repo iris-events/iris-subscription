@@ -2,11 +2,9 @@ package id.global.iris.subscription;
 
 import static id.global.common.iris.constants.MessagingHeaders.Message.EVENT_TYPE;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -131,19 +129,23 @@ class ConsumerTest {
         private static final String RESOURCE_ID = "all";
         private String sessionId;
         private Subscribe subscribe;
+        private Channel channel;
 
         @BeforeEach
-        void beforeEach() {
+        void beforeEach() throws IOException {
             sessionId = UUID.randomUUID().toString();
             when(eventContext.getSessionId()).thenReturn(Optional.of(sessionId));
 
             final var resource = new Resource(RESOURCE_TYPE, RESOURCE_ID);
             final var resources = List.of(resource);
             subscribe = new Subscribe(resources);
+
+            channel = mock(Channel.class);
+            when(channelService.getOrCreateChannelById(anyString())).thenReturn(channel);
         }
 
         @Test
-        void subscriptionManager() {
+        void subscriptionManager() throws IOException {
             consumer.subscribe(subscribe);
 
             final var subscriptionArgumentCaptor = ArgumentCaptor.forClass(Subscription.class);
@@ -156,7 +158,7 @@ class ConsumerTest {
         }
 
         @Test
-        void eventContext() {
+        void eventContext() throws IOException {
             consumer.subscribe(subscribe);
 
             final var subscriptionIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
@@ -166,22 +168,34 @@ class ConsumerTest {
         }
 
         @Test
-        void producer() {
+        void subscribed() throws IOException {
             consumer.subscribe(subscribe);
 
-            final var objectArgumentCaptor = ArgumentCaptor.forClass(Object.class);
-            verify(producer, times(2)).send(objectArgumentCaptor.capture());
-            final var allValues = objectArgumentCaptor.getAllValues();
+            final var objectArgumentCaptor = ArgumentCaptor.forClass(Subscribed.class);
+            verify(producer).send(objectArgumentCaptor.capture());
+            final var subscribed = objectArgumentCaptor.getValue();
 
-            assertThat(allValues.get(0), instanceOf(Subscribed.class));
-            final var subscribed = (Subscribed) allValues.get(0);
             assertThat(subscribed.resourceId(), is(RESOURCE_ID));
             assertThat(subscribed.resourceType(), is(RESOURCE_TYPE));
+        }
 
-            assertThat(allValues.get(1), instanceOf(SnapshotRequested.class));
-            final var snapshotRequested = (SnapshotRequested) allValues.get(1);
-            assertThat(snapshotRequested.resourceId(), is(RESOURCE_ID));
-            assertThat(snapshotRequested.resourceType(), is(RESOURCE_TYPE));
+        @Test
+        void snapshotRequested() throws IOException {
+            final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
+            final var routingKey = RESOURCE_TYPE + "." + exchangeName;
+
+            final var subscriptionId = buildSubscriptionId(RESOURCE_TYPE, RESOURCE_ID);
+            final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, routingKey,
+                    Scope.INTERNAL, null, sessionId, subscriptionId);
+            final var basicProperties = new AMQP.BasicProperties();
+            when(amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails)).thenReturn(basicProperties);
+
+            consumer.subscribe(subscribe);
+
+            final var snapshotRequested = new SnapshotRequested(RESOURCE_TYPE, RESOURCE_ID);
+            final var payloadsAsBytes = objectMapper.writeValueAsBytes(snapshotRequested);
+
+            verify(channel).basicPublish(exchangeName, routingKey, true, basicProperties, payloadsAsBytes);
         }
     }
 

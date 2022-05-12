@@ -59,13 +59,13 @@ public class Consumer {
     ObjectMapper objectMapper;
 
     @MessageHandler
-    public void subscribeInternal(final SubscribeInternal subscribe) {
+    public void subscribeInternal(final SubscribeInternal subscribe) throws IOException {
         log.info("Subscribe internal received: {}", subscribe);
         subscribe(subscribe.resourceType(), subscribe.resourceId());
     }
 
     @MessageHandler
-    public void subscribe(final Subscribe subscribe) {
+    public void subscribe(final Subscribe subscribe) throws IOException {
         log.info("Subscribe received: {}", subscribe);
         for (Resource resource : subscribe.resources()) {
             subscribe(resource.resourceType(), resource.resourceId());
@@ -120,14 +120,29 @@ public class Consumer {
         });
     }
 
-    private void subscribe(final String resourceType, final String resourceId) {
+    private void subscribe(final String resourceType, final String resourceId) throws IOException {
         final var subscription = new Subscription(resourceType, resourceId, eventContext.getSessionId().orElse(null));
         subscriptionManager.addSubscription(subscription);
-
-        final var snapshotRequested = new SnapshotRequested(resourceType, resourceId);
         eventContext.setSubscriptionId(subscription.id());
+
+        sendSnapshotRequested(subscription);
+
         final var subscribed = new Subscribed(resourceType, resourceId);
         producer.send(subscribed);
-        producer.send(snapshotRequested);
+    }
+
+    private void sendSnapshotRequested(final Subscription subscription) throws IOException {
+        final var resourceType = subscription.resourceType();
+        final var snapshotRequested = new SnapshotRequested(resourceType, subscription.resourceId());
+
+        final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
+        final var routingKey = String.format("%s.%s", resourceType, exchangeName);
+
+        final var channel = channelService.getOrCreateChannelById(CHANNEL_ID);
+        final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, routingKey,
+                Scope.INTERNAL, null, subscription.sessionId(), subscription.id());
+        final var amqpBasicProperties = amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails);
+        final var payloadAsBytes = objectMapper.writeValueAsBytes(snapshotRequested);
+        channel.basicPublish(exchangeName, routingKey, true, amqpBasicProperties, payloadAsBytes);
     }
 }
