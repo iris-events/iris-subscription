@@ -182,7 +182,7 @@ class ConsumerTest {
         @Test
         void snapshotRequested() throws IOException {
             final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
-            final var routingKey = RESOURCE_TYPE + "." + exchangeName;
+            final var routingKey = RESOURCE_TYPE;
 
             final var subscriptionId = buildSubscriptionId(RESOURCE_TYPE, RESOURCE_ID);
             final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, routingKey,
