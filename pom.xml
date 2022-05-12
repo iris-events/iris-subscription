@@ -1,16 +1,15 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>id.global</groupId>
         <artifactId>microservice-parent</artifactId>
-        <version>5.0</version>
-        <relativePath/>
+        <version>5.2</version>
+        <relativePath />
     </parent>
     <groupId>id.global.iris</groupId>
     <artifactId>iris-subscription</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.4-SNAPSHOT</version>
     <scm>
         <connection>scm:git:git@github.com:globalid/iris-subscription.git</connection>
         <developerConnection>scm:git:git@github.com:globalid/iris-subscription.git</developerConnection>
@@ -18,8 +17,8 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
-        <version.globalid.common>1.1.10</version.globalid.common>
-        <version.globalid.event-messaging>1.2.18</version.globalid.event-messaging>
+        <version.globalid.common>1.1.11</version.globalid.common>
+        <version.globalid.event-messaging>1.2.20</version.globalid.event-messaging>
         <version.hamcrest-core>2.2</version.hamcrest-core>
     </properties>
     <dependencyManagement>

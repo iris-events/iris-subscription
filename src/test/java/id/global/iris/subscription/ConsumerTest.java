@@ -1,6 +1,6 @@
 package id.global.iris.subscription;
 
-import static id.global.common.constants.iris.MessagingHeaders.Message.EVENT_TYPE;
+import static id.global.common.iris.constants.MessagingHeaders.Message.EVENT_TYPE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.anyString;
@@ -28,9 +28,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 
-import id.global.common.annotations.iris.ExchangeType;
-import id.global.common.annotations.iris.Scope;
-import id.global.common.constants.iris.Exchanges;
+import id.global.common.iris.annotations.ExchangeType;
+import id.global.common.iris.annotations.Scope;
+import id.global.common.iris.constants.Exchanges;
 import id.global.iris.messaging.runtime.AmqpBasicPropertiesProvider;
 import id.global.iris.messaging.runtime.api.message.ResourceMessage;
 import id.global.iris.messaging.runtime.channel.ChannelService;
