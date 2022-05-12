@@ -135,13 +135,14 @@ public class Consumer {
         final var resourceType = subscription.resourceType();
         final var snapshotRequested = new SnapshotRequested(resourceType, subscription.resourceId());
 
-        final var routingKey = String.format("%s.%s", resourceType, SnapshotRequested.EXCHANGE_NAME);
+        final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
+        final var routingKey = String.format("%s.%s", resourceType, exchangeName);
 
         final var channel = channelService.getOrCreateChannelById(CHANNEL_ID);
-        final var routingDetails = new RoutingDetails(SnapshotRequested.EXCHANGE_NAME, SnapshotRequested.EXCHANGE_NAME,
-                ExchangeType.TOPIC, routingKey, Scope.INTERNAL, null, subscription.sessionId(), subscription.id());
+        final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, routingKey,
+                Scope.INTERNAL, null, subscription.sessionId(), subscription.id());
         final var amqpBasicProperties = amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails);
         final var payloadAsBytes = objectMapper.writeValueAsBytes(snapshotRequested);
-        channel.basicPublish(SnapshotRequested.EXCHANGE_NAME, routingKey, true, amqpBasicProperties, payloadAsBytes);
+        channel.basicPublish(exchangeName, routingKey, true, amqpBasicProperties, payloadAsBytes);
     }
 }

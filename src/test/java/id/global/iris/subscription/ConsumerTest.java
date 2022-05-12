@@ -181,12 +181,12 @@ class ConsumerTest {
 
         @Test
         void snapshotRequested() throws IOException {
-            final var routingKey = RESOURCE_TYPE + "." + SnapshotRequested.EXCHANGE_NAME;
+            final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
+            final var routingKey = RESOURCE_TYPE + "." + exchangeName;
 
             final var subscriptionId = buildSubscriptionId(RESOURCE_TYPE, RESOURCE_ID);
-            final var routingDetails = new RoutingDetails(SnapshotRequested.EXCHANGE_NAME, SnapshotRequested.EXCHANGE_NAME,
-                    ExchangeType.TOPIC, routingKey, Scope.INTERNAL,
-                    null, sessionId, subscriptionId);
+            final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, routingKey,
+                    Scope.INTERNAL, null, sessionId, subscriptionId);
             final var basicProperties = new AMQP.BasicProperties();
             when(amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails)).thenReturn(basicProperties);
 
@@ -195,7 +195,7 @@ class ConsumerTest {
             final var snapshotRequested = new SnapshotRequested(RESOURCE_TYPE, RESOURCE_ID);
             final var payloadsAsBytes = objectMapper.writeValueAsBytes(snapshotRequested);
 
-            verify(channel).basicPublish(SnapshotRequested.EXCHANGE_NAME, routingKey, true, basicProperties, payloadsAsBytes);
+            verify(channel).basicPublish(exchangeName, routingKey, true, basicProperties, payloadsAsBytes);
         }
     }
 
