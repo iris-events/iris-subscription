@@ -17,7 +17,7 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
-        <version.globalid.common>1.1.11</version.globalid.common>
+        <version.globalid.common>1.1.12</version.globalid.common>
         <version.globalid.event-messaging>1.2.20</version.globalid.event-messaging>
         <version.hamcrest-core>2.2</version.hamcrest-core>
     </properties>
