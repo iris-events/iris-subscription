@@ -9,18 +9,20 @@ import id.global.iris.subscription.collection.SubscriptionCollection;
 import id.global.iris.subscription.model.Resource;
 import id.global.iris.subscription.model.Subscription;
 import id.global.iris.subscription.validation.SubscriptionValidator;
+import io.quarkus.scheduler.Scheduled;
 
 @ApplicationScoped
 public class SubscriptionManager {
-    private final SubscriptionCollection subscriptionCollection;
+    SubscriptionCollection subscriptionCollection;
 
     @Inject
-    public SubscriptionManager() {
-        subscriptionCollection = new SubscriptionCollection();
+    public SubscriptionManager(SubscriptionCollection subscriptionCollection) {
+        this.subscriptionCollection = subscriptionCollection;
     }
 
-    SubscriptionManager(SubscriptionCollection collection) {
-        this.subscriptionCollection = collection;
+    @Scheduled(every = "PT12H")
+    public void cleanup() {
+        this.subscriptionCollection.cleanUp();
     }
 
     public void addSubscription(Subscription subscription) {
