@@ -133,16 +133,17 @@ public class Consumer {
 
     private void sendSnapshotRequested(final Subscription subscription) throws IOException {
         final var resourceType = subscription.resourceType();
-        final var snapshotRequested = new SnapshotRequested(resourceType, subscription.resourceId());
+        final var resourceId = subscription.resourceId();
 
         final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
-        final var routingKey = String.format("%s.%s", resourceType, exchangeName);
-
-        final var channel = channelService.getOrCreateChannelById(CHANNEL_ID);
-        final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, routingKey,
+        final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, resourceType,
                 Scope.INTERNAL, null, subscription.sessionId(), subscription.id());
         final var amqpBasicProperties = amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails);
+
+        final var snapshotRequested = new SnapshotRequested(resourceType, resourceId);
         final var payloadAsBytes = objectMapper.writeValueAsBytes(snapshotRequested);
-        channel.basicPublish(exchangeName, routingKey, true, amqpBasicProperties, payloadAsBytes);
+
+        final var channel = channelService.getOrCreateChannelById(CHANNEL_ID);
+        channel.basicPublish(exchangeName, resourceType, true, amqpBasicProperties, payloadAsBytes);
     }
 }
