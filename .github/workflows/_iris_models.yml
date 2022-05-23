@@ -6,11 +6,19 @@ on:
       - 'main'
     tags:
       - v*
-  workflow_dispatch: null
+  workflow_dispatch:
+    inputs:
+      amqp-generator-version:
+        description: 'AMQP generator version (=iris-maven version)'
+        type: string
+        required: false
+        default: ''
 jobs:
   models:
     name: Generate Java and TS models
     uses: globalid/.github/.github/workflows/java-iris-publish.yml@master
+    with:
+      amqp-generator-version: ${{ github.event.inputs.amqp-generator-version }}
     secrets:
       GHA_BOT_TOKEN: ${{ secrets.GHA_BOT_TOKEN }}
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
