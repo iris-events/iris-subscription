@@ -17,16 +17,16 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
-        <version.globalid.common>1.1.12</version.globalid.common>
-        <version.globalid.event-messaging>1.2.21</version.globalid.event-messaging>
+        <version.globalid.common>2.0.0</version.globalid.common>
+        <version.globalid.iris>2.0.3</version.globalid.iris>
         <version.hamcrest-core>2.2</version.hamcrest-core>
     </properties>
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>id.global.iris</groupId>
-                <artifactId>event-messaging</artifactId>
-                <version>${version.globalid.event-messaging}</version>
+                <artifactId>quarkus-iris</artifactId>
+                <version>${version.globalid.iris}</version>
             </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>
@@ -44,8 +44,8 @@
         </dependency>
         <dependency>
             <groupId>id.global.iris</groupId>
-            <artifactId>event-messaging</artifactId>
-            <version>${version.globalid.event-messaging}</version>
+            <artifactId>quarkus-iris</artifactId>
+            <version>${version.globalid.iris}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>

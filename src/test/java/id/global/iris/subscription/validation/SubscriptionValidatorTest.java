@@ -34,7 +34,8 @@ class SubscriptionValidatorTest {
 
         String userId = "userId";
         String sessionId = "sessionId";
-        String resType = "resType";
+        String resType = "res-type";
+        String invalidResTypeFormat = "resType";
         String resId = "resId";
 
         return Stream.of(
@@ -44,6 +45,8 @@ class SubscriptionValidatorTest {
                 Arguments.of(new Subscription(null, userId, sessionId), SubscriptionException.class,
                         "Subscription must contain resourceType and resourceId"),
                 Arguments.of(new Subscription(resType, null, sessionId), SubscriptionException.class,
-                        "Subscription must contain resourceType and resourceId"));
+                        "Subscription must contain resourceType and resourceId"),
+                Arguments.of(new Subscription(invalidResTypeFormat, resId, sessionId), SubscriptionException.class,
+                        "Subscription must have resourceType in kebab case pattern"));
     }
 }

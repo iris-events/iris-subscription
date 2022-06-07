@@ -1,9 +1,13 @@
 package id.global.iris.subscription.validation;
 
+import java.util.regex.Pattern;
+
 import id.global.iris.subscription.exception.SubscriptionException;
 import id.global.iris.subscription.model.Subscription;
 
 public class SubscriptionValidator {
+    private static final Pattern KEBAB_CASE_PATTERN = Pattern.compile("^([a-z][a-z0-9]*)(-[a-z0-9]+)*$");
+
     public static void validate(Subscription subscription) {
         String sessionId = subscription.sessionId();
         String resourceId = subscription.resourceId();
@@ -16,5 +20,10 @@ public class SubscriptionValidator {
         if (resourceType == null || resourceId == null) {
             throw new SubscriptionException("Subscription must contain resourceType and resourceId");
         }
+
+        if (!KEBAB_CASE_PATTERN.matcher(resourceType).matches()) {
+            throw new SubscriptionException("Subscription must have resourceType in kebab case pattern");
+        }
+
     }
 }
