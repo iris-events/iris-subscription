@@ -13,13 +13,13 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import id.global.common.iris.annotations.ExchangeType;
-import id.global.common.iris.annotations.MessageHandler;
-import id.global.common.iris.annotations.Scope;
-import id.global.common.iris.constants.Exchanges;
-import id.global.common.iris.constants.MessagingHeaders;
+import id.global.iris.common.annotations.ExchangeType;
+import id.global.iris.common.annotations.MessageHandler;
+import id.global.iris.common.annotations.Scope;
+import id.global.iris.common.constants.Exchanges;
+import id.global.iris.common.constants.MessagingHeaders;
+import id.global.iris.common.message.ResourceMessage;
 import id.global.iris.messaging.runtime.AmqpBasicPropertiesProvider;
-import id.global.iris.messaging.runtime.api.message.ResourceMessage;
 import id.global.iris.messaging.runtime.channel.ChannelService;
 import id.global.iris.messaging.runtime.context.EventContext;
 import id.global.iris.messaging.runtime.producer.AmqpProducer;
@@ -109,7 +109,7 @@ public class Consumer {
         subscriptions.forEach(subscription -> {
             final var amqpBasicProperties = amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(
                     new RoutingDetails(eventName, sessionExchange, ExchangeType.TOPIC, routingKey, Scope.SESSION, null,
-                            subscription.sessionId(), subscription.id()));
+                            subscription.sessionId(), subscription.id(), false));
             try {
                 log.info("Sending message. Exchange = {}, routingKey = {}, amqpBasicProperties = {}, sessionId = {}",
                         sessionExchange, routingKey, amqpBasicProperties, subscription.sessionId());
@@ -137,7 +137,7 @@ public class Consumer {
 
         final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
         final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, resourceType,
-                Scope.INTERNAL, null, subscription.sessionId(), subscription.id());
+                Scope.INTERNAL, null, subscription.sessionId(), subscription.id(), false);
         final var amqpBasicProperties = amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails);
 
         final var snapshotRequested = new SnapshotRequested(resourceType, resourceId);

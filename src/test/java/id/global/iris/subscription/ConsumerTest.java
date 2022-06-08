@@ -1,6 +1,6 @@
 package id.global.iris.subscription;
 
-import static id.global.common.iris.constants.MessagingHeaders.Message.EVENT_TYPE;
+import static id.global.iris.common.constants.MessagingHeaders.Message.EVENT_TYPE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.anyString;
@@ -28,11 +28,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 
-import id.global.common.iris.annotations.ExchangeType;
-import id.global.common.iris.annotations.Scope;
-import id.global.common.iris.constants.Exchanges;
+import id.global.iris.common.annotations.ExchangeType;
+import id.global.iris.common.annotations.Scope;
+import id.global.iris.common.constants.Exchanges;
+import id.global.iris.common.message.ResourceMessage;
 import id.global.iris.messaging.runtime.AmqpBasicPropertiesProvider;
-import id.global.iris.messaging.runtime.api.message.ResourceMessage;
 import id.global.iris.messaging.runtime.channel.ChannelService;
 import id.global.iris.messaging.runtime.context.EventContext;
 import id.global.iris.messaging.runtime.producer.AmqpProducer;
@@ -107,7 +107,7 @@ class ConsumerTest {
             final var routingKey = buildRoutingKey(EVENT_NAME, exchange);
             final var subscriptionId = buildSubscriptionId(RESOURCE_TYPE, RESOURCE_ID);
             final var routingDetails = new RoutingDetails(EVENT_NAME, exchange, ExchangeType.TOPIC, routingKey, Scope.SESSION,
-                    null, sessionId, subscriptionId);
+                    null, sessionId, subscriptionId, false);
             final var basicProperties = new AMQP.BasicProperties();
             when(amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails)).thenReturn(basicProperties);
 
@@ -186,7 +186,7 @@ class ConsumerTest {
 
             final var subscriptionId = buildSubscriptionId(RESOURCE_TYPE, RESOURCE_ID);
             final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, routingKey,
-                    Scope.INTERNAL, null, sessionId, subscriptionId);
+                    Scope.INTERNAL, null, sessionId, subscriptionId, false);
             final var basicProperties = new AMQP.BasicProperties();
             when(amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails)).thenReturn(basicProperties);
 

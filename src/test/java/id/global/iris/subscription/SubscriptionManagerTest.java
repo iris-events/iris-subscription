@@ -30,7 +30,7 @@ class SubscriptionManagerTest {
     @Test
     void addSubscription() {
         String sessionId = "sessionId";
-        String resourceType = "resourceType";
+        String resourceType = "resource-type";
         String resourceId = "resourceId";
 
         Subscription subscription = new Subscription(resourceType, resourceId, sessionId);
