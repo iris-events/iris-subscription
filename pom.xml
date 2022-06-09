@@ -17,7 +17,6 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
-        <version.globalid.common>2.0.0</version.globalid.common>
         <version.globalid.iris>2.0.6</version.globalid.iris>
         <version.hamcrest-core>2.2</version.hamcrest-core>
     </properties>
@@ -37,11 +36,6 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
-        <dependency>
-            <groupId>id.global.common</groupId>
-            <artifactId>globalid-common</artifactId>
-            <version>${version.globalid.common}</version>
-        </dependency>
         <dependency>
             <groupId>id.global.iris</groupId>
             <artifactId>quarkus-iris</artifactId>
