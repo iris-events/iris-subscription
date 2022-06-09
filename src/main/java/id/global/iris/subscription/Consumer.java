@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -33,6 +34,7 @@ import id.global.iris.subscription.events.Unsubscribe;
 import id.global.iris.subscription.events.Unsubscribed;
 import id.global.iris.subscription.model.Resource;
 import id.global.iris.subscription.model.Subscription;
+import io.quarkus.runtime.StartupEvent;
 
 @ApplicationScoped
 public class Consumer {
@@ -57,6 +59,10 @@ public class Consumer {
 
     @Inject
     ObjectMapper objectMapper;
+
+    void startup(@Observes StartupEvent event) {
+        log.info("Starting Iris consumer.");
+    }
 
     @MessageHandler
     public void subscribeInternal(final SubscribeInternal subscribe) throws IOException {
