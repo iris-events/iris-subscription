@@ -9,12 +9,12 @@
     </parent>
     <groupId>id.global.iris</groupId>
     <artifactId>iris-subscription</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8-SNAPSHOT</version>
     <scm>
         <connection>scm:git:git@github.com:globalid/iris-subscription.git</connection>
         <developerConnection>scm:git:git@github.com:globalid/iris-subscription.git</developerConnection>
         <url>https://github.com/globalid/iris-subscription</url>
-        <tag>v1.0.7</tag>
+        <tag>HEAD</tag>
     </scm>
     <properties>
         <version.globalid.iris>2.0.6</version.globalid.iris>
