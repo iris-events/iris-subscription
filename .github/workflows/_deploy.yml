@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wait for tests to succeed
-        uses: lewagon/wait-on-check-action@v1
+        uses: lewagon/wait-on-check-action@v1.1.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           check-name: 'run-tests'
