@@ -20,10 +20,10 @@ import id.global.iris.common.annotations.Scope;
 import id.global.iris.common.constants.Exchanges;
 import id.global.iris.common.constants.MessagingHeaders;
 import id.global.iris.common.message.ResourceMessage;
-import id.global.iris.messaging.runtime.AmqpBasicPropertiesProvider;
+import id.global.iris.messaging.runtime.BasicPropertiesProvider;
 import id.global.iris.messaging.runtime.channel.ChannelService;
 import id.global.iris.messaging.runtime.context.EventContext;
-import id.global.iris.messaging.runtime.producer.AmqpProducer;
+import id.global.iris.messaging.runtime.producer.EventProducer;
 import id.global.iris.messaging.runtime.producer.RoutingDetails;
 import id.global.iris.subscription.events.SessionClosed;
 import id.global.iris.subscription.events.SnapshotRequested;
@@ -48,14 +48,14 @@ public class Consumer {
     SubscriptionManager subscriptionManager;
 
     @Inject
-    AmqpProducer producer;
+    EventProducer producer;
 
     @Inject
     @Named("producerChannelService")
     ChannelService channelService;
 
     @Inject
-    AmqpBasicPropertiesProvider amqpBasicPropertiesProvider;
+    BasicPropertiesProvider basicPropertiesProvider;
 
     @Inject
     ObjectMapper objectMapper;
@@ -113,7 +113,7 @@ public class Consumer {
 
         final var channel = channelService.getOrCreateChannelById(CHANNEL_ID);
         subscriptions.forEach(subscription -> {
-            final var amqpBasicProperties = amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(
+            final var amqpBasicProperties = basicPropertiesProvider.getOrCreateAmqpBasicProperties(
                     new RoutingDetails(eventName, sessionExchange, ExchangeType.TOPIC, routingKey, Scope.SESSION, null,
                             subscription.sessionId(), subscription.id(), false));
             try {
@@ -144,7 +144,7 @@ public class Consumer {
         final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
         final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, resourceType,
                 Scope.INTERNAL, null, subscription.sessionId(), subscription.id(), false);
-        final var amqpBasicProperties = amqpBasicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails);
+        final var amqpBasicProperties = basicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails);
 
         final var snapshotRequested = new SnapshotRequested(resourceType, resourceId);
         final var payloadAsBytes = objectMapper.writeValueAsBytes(snapshotRequested);

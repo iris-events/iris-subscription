@@ -4,7 +4,7 @@
     <parent>
         <groupId>id.global</groupId>
         <artifactId>microservice-parent</artifactId>
-        <version>5.7</version>
+        <version>6.0</version>
         <relativePath />
     </parent>
     <groupId>id.global.iris</groupId>
@@ -17,16 +17,10 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
-        <version.globalid.iris>2.0.7</version.globalid.iris>
         <version.hamcrest-core>2.2</version.hamcrest-core>
     </properties>
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>id.global.iris</groupId>
-                <artifactId>quarkus-iris</artifactId>
-                <version>${version.globalid.iris}</version>
-            </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-core</artifactId>
@@ -39,7 +33,6 @@
         <dependency>
             <groupId>id.global.iris</groupId>
             <artifactId>quarkus-iris</artifactId>
-            <version>${version.globalid.iris}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -62,11 +55,6 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5-mockito</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-reactive-messaging-rabbitmq</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
