@@ -4,12 +4,12 @@
     <parent>
         <groupId>id.global</groupId>
         <artifactId>microservice-parent</artifactId>
-        <version>6.3</version>
+        <version>6.4</version>
         <relativePath />
     </parent>
     <groupId>id.global.iris</groupId>
     <artifactId>iris-subscription</artifactId>
-    <version>1.0.9-SNAPSHOT</version>
+    <version>1.0.10-SNAPSHOT</version>
     <scm>
         <connection>scm:git:git@github.com:globalid/iris-subscription.git</connection>
         <developerConnection>scm:git:git@github.com:globalid/iris-subscription.git</developerConnection>
@@ -30,6 +30,11 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
+        <!-- kubernetes configuration -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-kubernetes</artifactId>
+        </dependency>
         <dependency>
             <groupId>id.global.iris</groupId>
             <artifactId>quarkus-iris</artifactId>
