@@ -19,9 +19,5 @@ jobs:
     name: Generate Java and TS models
     uses: globalid/.github/.github/workflows/java-iris-publish.yml@master
     with:
-      amqp-generator-version: ${{ github.event.inputs.amqp-generator-version }}
-    secrets:
-      GHA_BOT_TOKEN: ${{ secrets.GHA_BOT_TOKEN }}
-      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      amqp-generator-version: ${{ github.event.inputs.iris-generator-version }}
+    secrets: inherit

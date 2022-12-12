@@ -30,11 +30,6 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
-        <!-- kubernetes configuration -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-kubernetes</artifactId>
-        </dependency>
         <dependency>
             <groupId>id.global.iris</groupId>
             <artifactId>quarkus-iris</artifactId>
