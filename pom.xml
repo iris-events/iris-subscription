@@ -4,7 +4,7 @@
     <parent>
         <groupId>id.global</groupId>
         <artifactId>microservice-parent</artifactId>
-        <version>6.7</version>
+        <version>6.8</version>
         <relativePath />
     </parent>
     <groupId>id.global.iris</groupId>
@@ -18,7 +18,7 @@
     </scm>
     <properties>
         <version.hamcrest-core>2.2</version.hamcrest-core>
-        <version.iris>3.1.3</version.iris>
+        <version.iris>3.1.5</version.iris>
     </properties>
     <dependencyManagement>
         <dependencies>
