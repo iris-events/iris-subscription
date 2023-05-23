@@ -2,14 +2,13 @@ package id.global.iris.subscription;
 
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
 import id.global.iris.subscription.collection.SubscriptionCollection;
 import id.global.iris.subscription.model.Resource;
 import id.global.iris.subscription.model.Subscription;
 import id.global.iris.subscription.validation.SubscriptionValidator;
 import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class SubscriptionManager {
