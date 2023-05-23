@@ -1,6 +1,7 @@
 package id.global.iris.subscription.events;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import id.global.iris.common.annotations.Message;
 import id.global.iris.common.annotations.Scope;
 

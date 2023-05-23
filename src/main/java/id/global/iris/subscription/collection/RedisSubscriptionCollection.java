@@ -9,9 +9,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +21,8 @@ import id.global.iris.subscription.model.Resource;
 import id.global.iris.subscription.model.Subscription;
 import io.quarkus.redis.client.RedisClient;
 import io.vertx.redis.client.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped()
 public class RedisSubscriptionCollection implements SubscriptionCollection {

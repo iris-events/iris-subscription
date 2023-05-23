@@ -16,9 +16,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -44,6 +41,8 @@ import id.global.iris.subscription.model.Resource;
 import id.global.iris.subscription.model.Subscription;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 @QuarkusTest
 class ConsumerTest {
