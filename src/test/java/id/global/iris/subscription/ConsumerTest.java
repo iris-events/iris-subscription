@@ -3,15 +3,13 @@ package id.global.iris.subscription;
 import static id.global.iris.common.constants.MessagingHeaders.Message.EVENT_TYPE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -22,17 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
 
 import id.global.iris.common.annotations.ExchangeType;
 import id.global.iris.common.annotations.Scope;
 import id.global.iris.common.constants.Exchanges;
 import id.global.iris.common.message.ResourceMessage;
 import id.global.iris.messaging.runtime.BasicPropertiesProvider;
-import id.global.iris.messaging.runtime.channel.ChannelService;
 import id.global.iris.messaging.runtime.context.EventContext;
-import id.global.iris.messaging.runtime.producer.EventProducer;
 import id.global.iris.messaging.runtime.producer.RoutingDetails;
 import id.global.iris.subscription.events.SnapshotRequested;
 import id.global.iris.subscription.events.Subscribe;
@@ -42,7 +36,6 @@ import id.global.iris.subscription.model.Subscription;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 @QuarkusTest
 class ConsumerTest {
@@ -57,11 +50,7 @@ class ConsumerTest {
     SubscriptionManager subscriptionManager;
 
     @InjectMock
-    EventProducer producer;
-
-    @InjectMock
-    @Named("producerChannelService")
-    ChannelService channelService;
+    SubscriptionEventProducer producer;
 
     @InjectMock
     BasicPropertiesProvider basicPropertiesProvider;
@@ -84,36 +73,38 @@ class ConsumerTest {
 
         @Test
         void emptySubscriptions() throws IOException {
-            when(eventContext.getHeaders()).thenReturn(Map.of(EVENT_TYPE, EVENT_NAME));
+            when(eventContext.getHeaderValue(EVENT_TYPE)).thenReturn(Optional.of(EVENT_NAME));
             when(subscriptionManager.getSubscriptions(RESOURCE_TYPE, RESOURCE_ID)).thenReturn(Set.of());
 
             consumer.resourceUpdated(new ResourceMessage(RESOURCE_TYPE, RESOURCE_ID, ""));
 
-            verifyNoInteractions(channelService);
+            verifyNoInteractions(producer);
         }
 
         @Test
         void resourceUpdated() throws IOException {
-            when(eventContext.getHeaders()).thenReturn(Map.of(EVENT_TYPE, EVENT_NAME));
+            when(eventContext.getHeaderValue(EVENT_TYPE)).thenReturn(Optional.of(EVENT_NAME));
 
             final var subscriptions = Set.of(new Subscription(RESOURCE_TYPE, RESOURCE_ID, sessionId));
             when(subscriptionManager.getSubscriptions(RESOURCE_TYPE, RESOURCE_ID)).thenReturn(subscriptions);
 
-            final var channel = mock(Channel.class);
-            when(channelService.getOrCreateChannelById(anyString())).thenReturn(channel);
-
             final var exchange = Exchanges.SESSION.getValue();
             final var routingKey = buildRoutingKey(EVENT_NAME, exchange);
             final var subscriptionId = buildSubscriptionId(RESOURCE_TYPE, RESOURCE_ID);
-            final var routingDetails = new RoutingDetails(EVENT_NAME, exchange, ExchangeType.TOPIC, routingKey, Scope.SESSION,
-                    null, sessionId, subscriptionId, false);
-            final var basicProperties = new AMQP.BasicProperties();
-            when(basicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails)).thenReturn(basicProperties);
-
+            final var routingDetails = new RoutingDetails.Builder()
+                    .eventName(EVENT_NAME)
+                    .exchange(exchange)
+                    .exchangeType(ExchangeType.TOPIC)
+                    .routingKey(routingKey)
+                    .scope(Scope.SESSION)
+                    .sessionId(sessionId)
+                    .subscriptionId(subscriptionId)
+                    .build();
             final var payload = "a";
             consumer.resourceUpdated(new ResourceMessage(RESOURCE_TYPE, RESOURCE_ID, payload));
 
-            verify(channel).basicPublish(exchange, routingKey, true, basicProperties, objectMapper.writeValueAsBytes(payload));
+            verify(producer).sendResourceMessage(RESOURCE_TYPE, RESOURCE_ID, objectMapper.writeValueAsBytes(payload),
+                    routingDetails);
         }
 
         private String buildRoutingKey(String eventName, String exchange) {
@@ -128,7 +119,6 @@ class ConsumerTest {
         private static final String RESOURCE_ID = "all";
         private String sessionId;
         private Subscribe subscribe;
-        private Channel channel;
 
         @BeforeEach
         void beforeEach() throws IOException {
@@ -138,9 +128,6 @@ class ConsumerTest {
             final var resource = new Resource(RESOURCE_TYPE, RESOURCE_ID);
             final var resources = List.of(resource);
             subscribe = new Subscribe(resources);
-
-            channel = mock(Channel.class);
-            when(channelService.getOrCreateChannelById(anyString())).thenReturn(channel);
         }
 
         @Test
@@ -181,20 +168,26 @@ class ConsumerTest {
         @Test
         void snapshotRequested() throws IOException {
             final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
-            final var routingKey = RESOURCE_TYPE;
-
-            final var subscriptionId = buildSubscriptionId(RESOURCE_TYPE, RESOURCE_ID);
-            final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, routingKey,
-                    Scope.INTERNAL, null, sessionId, subscriptionId, false);
-            final var basicProperties = new AMQP.BasicProperties();
-            when(basicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails)).thenReturn(basicProperties);
 
             consumer.subscribe(subscribe);
 
+            final var inOrder = inOrder(producer);
+            final var subscribed = new Subscribed(RESOURCE_TYPE, RESOURCE_ID);
+            inOrder.verify(producer).send(subscribed);
+
+            final var subscriptionId = buildSubscriptionId(RESOURCE_TYPE, RESOURCE_ID);
+            final var routingDetails = new RoutingDetails.Builder()
+                    .eventName(exchangeName)
+                    .exchange(exchangeName)
+                    .exchangeType(ExchangeType.TOPIC)
+                    .routingKey(RESOURCE_TYPE)
+                    .scope(Scope.INTERNAL)
+                    .sessionId(sessionId)
+                    .subscriptionId(subscriptionId)
+                    .build();
             final var snapshotRequested = new SnapshotRequested(RESOURCE_TYPE, RESOURCE_ID);
             final var payloadsAsBytes = objectMapper.writeValueAsBytes(snapshotRequested);
-
-            verify(channel).basicPublish(exchangeName, routingKey, true, basicProperties, payloadsAsBytes);
+            inOrder.verify(producer).sendResourceMessage(RESOURCE_TYPE, RESOURCE_ID, payloadsAsBytes, routingDetails);
         }
     }
 

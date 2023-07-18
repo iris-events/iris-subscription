@@ -1,5 +1,12 @@
 package id.global.iris.subscription.collection;
 
+import static id.global.iris.subscription.collection.Utils.RESOURCE_SUB_TEMPLATE;
+import static id.global.iris.subscription.collection.Utils.SESSION_SUB_TEMPLATE;
+import static id.global.iris.subscription.collection.Utils.SUB_TEMPLATE;
+import static id.global.iris.subscription.collection.Utils.generateSubscriptionId;
+import static id.global.iris.subscription.collection.Utils.getResourceSubscriptionsSetId;
+import static id.global.iris.subscription.collection.Utils.getSessionSubscriptionsSetId;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,11 +34,6 @@ import jakarta.inject.Inject;
 @ApplicationScoped()
 public class RedisSubscriptionCollection implements SubscriptionCollection {
     private static final Logger log = LoggerFactory.getLogger(RedisSubscriptionCollection.class);
-
-    public static final String SUB_TEMPLATE = "subscription|%s";
-    private static final String SESSION_SUB_TEMPLATE = "sessionIdSub|%s";
-    private static final String RESOURCE_SUB_TEMPLATE = "resTypeResIdSub|%s";
-    public static final String PIPE = "|";
 
     @ConfigProperty(name = "subscription.collection.redis.ttl", defaultValue = "86400")
     String TTL;
@@ -188,24 +190,6 @@ public class RedisSubscriptionCollection implements SubscriptionCollection {
         } while (!scanCursor.equals("0"));
         return size;
 
-    }
-
-    private String getSessionSubscriptionsSetId(final String sessionId) {
-        return String.format(SESSION_SUB_TEMPLATE, sessionId);
-    }
-
-    private String getResourceSubscriptionsSetId(final String resourceType, final String resourceId) {
-        final var uniqueResId = getUniqueResId(resourceType, resourceId);
-        return String.format(RESOURCE_SUB_TEMPLATE, uniqueResId);
-    }
-
-    private String getUniqueResId(String resourceType, String resourceId) {
-        return String.format("%s|%s", resourceType, resourceId);
-    }
-
-    private String generateSubscriptionId(Subscription subscription) {
-        final var subId = subscription.sessionId() + PIPE + subscription.resourceType() + PIPE + subscription.resourceId();
-        return String.format(SUB_TEMPLATE, subId);
     }
 
     private List<String> mapResponseToStringList(final Response smembers) {
