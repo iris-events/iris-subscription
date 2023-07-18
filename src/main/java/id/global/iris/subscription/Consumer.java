@@ -1,8 +1,9 @@
 package id.global.iris.subscription;
 
+import static id.global.iris.common.constants.MessagingHeaders.Message.CACHE_TTL;
+
 import java.io.IOException;
 import java.util.Set;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,11 +16,10 @@ import id.global.iris.common.annotations.Scope;
 import id.global.iris.common.constants.Exchanges;
 import id.global.iris.common.constants.MessagingHeaders;
 import id.global.iris.common.message.ResourceMessage;
-import id.global.iris.messaging.runtime.BasicPropertiesProvider;
-import id.global.iris.messaging.runtime.channel.ChannelService;
 import id.global.iris.messaging.runtime.context.EventContext;
-import id.global.iris.messaging.runtime.producer.EventProducer;
 import id.global.iris.messaging.runtime.producer.RoutingDetails;
+import id.global.iris.subscription.collection.RedisSnapshotCollection;
+import id.global.iris.subscription.collection.Snapshot;
 import id.global.iris.subscription.events.SessionClosed;
 import id.global.iris.subscription.events.SnapshotRequested;
 import id.global.iris.subscription.events.Subscribe;
@@ -33,12 +33,10 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 @ApplicationScoped
 public class Consumer {
     private static final Logger log = LoggerFactory.getLogger(Consumer.class);
-    private static final String CHANNEL_ID = "iris-subscription" + UUID.randomUUID();
 
     @Inject
     EventContext eventContext;
@@ -47,14 +45,10 @@ public class Consumer {
     SubscriptionManager subscriptionManager;
 
     @Inject
-    EventProducer producer;
+    RedisSnapshotCollection snapshotCollection;
 
     @Inject
-    @Named("producerChannelService")
-    ChannelService channelService;
-
-    @Inject
-    BasicPropertiesProvider basicPropertiesProvider;
+    SubscriptionEventProducer producer;
 
     @Inject
     ObjectMapper objectMapper;
@@ -98,30 +92,32 @@ public class Consumer {
     public void resourceUpdated(final ResourceMessage resourceMessage) throws IOException {
         final var resourceType = resourceMessage.resourceType();
         final var resourceId = resourceMessage.resourceId();
-        final var payloadBytes = objectMapper.writeValueAsBytes(resourceMessage.payload());
-        final var eventName = eventContext.getHeaders().get(MessagingHeaders.Message.EVENT_TYPE).toString();
-        final var sessionExchange = Exchanges.SESSION.getValue();
-        final var routingKey = String.format("%s.%s", eventName, sessionExchange);
+        final var payloadAsBytes = objectMapper.writeValueAsBytes(resourceMessage.payload());
+        final var eventName = eventContext.getHeaderValue(MessagingHeaders.Message.EVENT_TYPE)
+                .orElseThrow(() -> new RuntimeException("Missing required event type header!"));
+        final var routingKey = String.format("%s.%s", eventName, Exchanges.SESSION.getValue());
+        final var snapshot = new Snapshot(eventName, routingKey, payloadAsBytes);
 
-        Set<Subscription> subscriptions = subscriptionManager.getSubscriptions(resourceType,
-                resourceId);
+        eventContext.getHeaderValue(CACHE_TTL)
+                .map(Integer::valueOf)
+                .ifPresent(cacheTtl -> snapshotCollection.insert(resourceType, resourceId, snapshot, cacheTtl));
 
+        Set<Subscription> subscriptions = subscriptionManager.getSubscriptions(resourceType, resourceId);
         if (subscriptions.isEmpty()) {
             return;
         }
 
-        final var channel = channelService.getOrCreateChannelById(CHANNEL_ID);
         subscriptions.forEach(subscription -> {
-            final var amqpBasicProperties = basicPropertiesProvider.getOrCreateAmqpBasicProperties(
-                    new RoutingDetails(eventName, sessionExchange, ExchangeType.TOPIC, routingKey, Scope.SESSION, null,
-                            subscription.sessionId(), subscription.id(), false));
-            try {
-                log.info("Sending message. Exchange = {}, routingKey = {}, amqpBasicProperties = {}, sessionId = {}",
-                        sessionExchange, routingKey, amqpBasicProperties, subscription.sessionId());
-                channel.basicPublish(sessionExchange, routingKey, true, amqpBasicProperties, payloadBytes);
-            } catch (IOException e) {
-                log.error("Could not send resource message.", e);
-            }
+            final var routingDetails = new RoutingDetails.Builder()
+                    .eventName(eventName)
+                    .exchange(Exchanges.SESSION.getValue())
+                    .exchangeType(ExchangeType.TOPIC)
+                    .routingKey(routingKey)
+                    .scope(Scope.SESSION)
+                    .sessionId(subscription.sessionId())
+                    .subscriptionId(subscription.id())
+                    .build();
+            producer.sendResourceMessage(resourceType, resourceId, payloadAsBytes, routingDetails);
         });
     }
 
@@ -130,25 +126,48 @@ public class Consumer {
         subscriptionManager.addSubscription(subscription);
         eventContext.setSubscriptionId(subscription.id());
 
-        sendSnapshotRequested(subscription);
-
         final var subscribed = new Subscribed(resourceType, resourceId);
         producer.send(subscribed);
+
+        // check for possible cached snapshot
+        final var optionalSnapshot = snapshotCollection.get(resourceType, resourceId);
+        if (optionalSnapshot.isPresent()) {
+            log.info("Found snapshot on subscribe... sending snapshot. resourceType={}, resourceId={}", resourceType,
+                    resourceId);
+            final var snapshot = optionalSnapshot.get();
+            final var eventName = snapshot.eventName();
+            final var routingKey = snapshot.routingKey();
+
+            final var routingDetails = new RoutingDetails.Builder()
+                    .eventName(eventName)
+                    .exchange(Exchanges.SESSION.getValue())
+                    .exchangeType(ExchangeType.TOPIC)
+                    .routingKey(routingKey)
+                    .scope(Scope.SESSION)
+                    .sessionId(subscription.sessionId())
+                    .subscriptionId(subscription.id())
+                    .build();
+            producer.sendResourceMessage(resourceType, resourceId, snapshot.message(), routingDetails);
+        }
+
+        sendSnapshotRequested(subscription);
     }
 
     private void sendSnapshotRequested(final Subscription subscription) throws IOException {
         final var resourceType = subscription.resourceType();
         final var resourceId = subscription.resourceId();
-
         final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
-        final var routingDetails = new RoutingDetails(exchangeName, exchangeName, ExchangeType.TOPIC, resourceType,
-                Scope.INTERNAL, null, subscription.sessionId(), subscription.id(), false);
-        final var amqpBasicProperties = basicPropertiesProvider.getOrCreateAmqpBasicProperties(routingDetails);
-
-        final var snapshotRequested = new SnapshotRequested(resourceType, resourceId);
-        final var payloadAsBytes = objectMapper.writeValueAsBytes(snapshotRequested);
-
-        final var channel = channelService.getOrCreateChannelById(CHANNEL_ID);
-        channel.basicPublish(exchangeName, resourceType, true, amqpBasicProperties, payloadAsBytes);
+        final var routingDetails = new RoutingDetails.Builder()
+                .eventName(exchangeName)
+                .exchange(exchangeName)
+                .exchangeType(ExchangeType.TOPIC)
+                .routingKey(resourceType)
+                .scope(Scope.INTERNAL)
+                .sessionId(subscription.sessionId())
+                .subscriptionId(subscription.id())
+                .build();
+        final var snapshotRequestedMessage = new SnapshotRequested(resourceType, resourceId);
+        final var payloadAsBytes = objectMapper.writeValueAsBytes(snapshotRequestedMessage);
+        producer.sendResourceMessage(resourceType, resourceId, payloadAsBytes, routingDetails);
     }
 }
