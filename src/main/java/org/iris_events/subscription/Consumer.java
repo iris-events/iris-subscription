@@ -63,13 +63,13 @@ public class Consumer {
 
     @MessageHandler
     public void subscribeInternal(final SubscribeInternal subscribe) throws IOException {
-        log.info("Subscribe internal received: {}", subscribe);
+        log.debug("Subscribe internal received: {}", subscribe);
         subscribe(subscribe.resourceType(), subscribe.resourceId());
     }
 
     @MessageHandler
     public void subscribe(final Subscribe subscribe) throws IOException {
-        log.info("Subscribe received: {}", subscribe);
+        log.debug("Subscribe received: {}", subscribe);
         for (Resource resource : subscribe.resources()) {
             subscribe(resource.resourceType(), resource.resourceId());
         }
@@ -84,15 +84,8 @@ public class Consumer {
 
     @MessageHandler
     public Unsubscribed unsubscribe(final Unsubscribe unsubscribe) {
-        log.info("Unsubscribe received: {}", unsubscribe);
-        final var resources = new ArrayList<Resource>();
-        if (unsubscribe.resourceType() != null) {
-            resources.add(new Resource(unsubscribe.resourceType(), unsubscribe.resourceId()));
-        }
-        if (unsubscribe.resources() != null) {
-            resources.addAll(unsubscribe.resources());
-        }
-
+        log.debug("Unsubscribe received: {}", unsubscribe);
+        final var resources = unsubscribe.resources();
         final var sessionId = eventContext.getSessionId().orElse(null);
         for (Resource resource : resources) {
             if (resource.resourceType() == null) {
