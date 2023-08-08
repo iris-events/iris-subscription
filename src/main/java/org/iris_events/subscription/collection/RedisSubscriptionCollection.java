@@ -1,5 +1,8 @@
 package org.iris_events.subscription.collection;
 
+import static org.iris_events.subscription.collection.Utils.RESOURCE_SUB_TEMPLATE;
+import static org.iris_events.subscription.collection.Utils.SESSION_SUB_TEMPLATE;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.iris_events.subscription.exception.SubscriptionException;
+
 import io.quarkus.redis.client.RedisClient;
 import io.vertx.redis.client.Response;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -96,22 +100,42 @@ public class RedisSubscriptionCollection implements SubscriptionCollection {
             return;
         }
 
-        final var resourceSubscriptionsSetId = Utils.getResourceSubscriptionsSetId(resourceType, resourceId);
-        final var sessionSubscriptionIds = redisClient.smembers(sessionSubscriptionsSetId).stream().map(Response::toString);
-        final var resourceSubscriptionIds = redisClient.smembers(resourceSubscriptionsSetId).stream().map(Response::toString)
-                .collect(Collectors.toSet());
+        final var sessionSubscriptionIds = redisClient.smembers(sessionSubscriptionsSetId)
+                .stream()
+                .map(Response::toString)
+                .toList();
 
-        final var intersect = sessionSubscriptionIds.distinct()
-                .filter(resourceSubscriptionIds::contains)
-                .collect(Collectors.toSet());
+        if (resourceId == null) {
+            final var sessionsByResourceId = scanByResourceType(resourceType);
+            sessionsByResourceId
+                    .forEach((resourceSubscriptionsSetId, allSessionSubscriptionIds) -> {
+                        final var intersect = allSessionSubscriptionIds.stream().distinct()
+                                .filter(sessionSubscriptionIds::contains)
+                                .collect(Collectors.toSet());
+                        removeForResourceAndSession(sessionSubscriptionsSetId, resourceSubscriptionsSetId, intersect);
+                    });
+        } else {
+            final var resourceSubscriptionsSetId = Utils.getResourceSubscriptionsSetId(resourceType, resourceId);
+            final var resourceSubscriptionIds = redisClient.smembers(resourceSubscriptionsSetId).stream()
+                    .map(Response::toString)
+                    .collect(Collectors.toSet());
+            final var intersect = sessionSubscriptionIds.stream().distinct()
+                    .filter(resourceSubscriptionIds::contains)
+                    .collect(Collectors.toSet());
+            removeForResourceAndSession(sessionSubscriptionsSetId, resourceSubscriptionsSetId, intersect);
+        }
+    }
+
+    private void removeForResourceAndSession(final String sessionSubscriptionsSetId, final String resourceSubscriptionsSetId,
+            final Set<String> resourceIds) {
 
         // remove all subscriptions by intersected IDS
-        if (intersect.isEmpty()) {
+        if (resourceIds.isEmpty()) {
             return;
         }
-        redisClient.del(intersect.stream().toList());
-        redisClient.srem(Stream.concat(Stream.of(sessionSubscriptionsSetId), intersect.stream()).toList());
-        redisClient.srem(Stream.concat(Stream.of(resourceSubscriptionsSetId), intersect.stream()).toList());
+        redisClient.del(resourceIds.stream().toList());
+        redisClient.srem(Stream.concat(Stream.of(sessionSubscriptionsSetId), resourceIds.stream()).toList());
+        redisClient.srem(Stream.concat(Stream.of(resourceSubscriptionsSetId), resourceIds.stream()).toList());
     }
 
     @Override
@@ -121,13 +145,13 @@ public class RedisSubscriptionCollection implements SubscriptionCollection {
 
     @Override
     public int sessionSubscriptionCount() {
-        return scanForSize(Utils.SESSION_SUB_TEMPLATE);
+        return scanForSize(SESSION_SUB_TEMPLATE);
     }
 
     @Override
     public void cleanUp() {
-        cleanSubscriptionPointers(Utils.RESOURCE_SUB_TEMPLATE);
-        cleanSubscriptionPointers(Utils.SESSION_SUB_TEMPLATE);
+        cleanSubscriptionPointers(RESOURCE_SUB_TEMPLATE);
+        cleanSubscriptionPointers(SESSION_SUB_TEMPLATE);
     }
 
     private void cleanSubscriptionPointers(String subTemplate) {
@@ -148,6 +172,24 @@ public class RedisSubscriptionCollection implements SubscriptionCollection {
 
         subscriptionIdsToRemove.forEach((key, value) -> redisClient.srem(
                 Stream.concat(Stream.of(key), value.stream()).collect(Collectors.toList())));
+    }
+
+    private HashMap<String, List<String>> scanByResourceType(String resourceType) {
+        var scanCursor = "0";
+        var subscriptionIds = new HashMap<String, List<String>>();
+        do {
+            final var subscriptionScanResult = redisClient.scan(
+                    List.of(scanCursor, "match", String.format(RESOURCE_SUB_TEMPLATE, resourceType) + "|*"));
+            scanCursor = subscriptionScanResult.get(0).toString();
+
+            subscriptionScanResult.get(1).stream().map(Response::toString)
+                    .forEach(subscriptionPointerSet -> redisClient.smembers(subscriptionPointerSet).stream()
+                            .map(res -> List.of(res.toString()))
+                            .forEach(matching -> subscriptionIds.computeIfAbsent(subscriptionPointerSet,
+                                    k -> new ArrayList<>()).addAll(matching)));
+        } while (!scanCursor.equals("0"));
+
+        return subscriptionIds;
     }
 
     private Set<Subscription> getSubscriptionsBySubscriptionIds(final List<String> subscriptionIds) {
