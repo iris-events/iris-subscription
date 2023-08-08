@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import org.iris_events.subscription.model.Resource;
 import org.iris_events.subscription.model.Subscription;
+
 import io.quarkus.redis.client.RedisClient;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -117,11 +118,14 @@ public class RedisSubscriptionCollectionTest {
         final var sessionId1 = getSessionId("1");
         final var sessionId2 = getSessionId("2");
         final var sessionId3 = getSessionId("3");
-        final var resourceId = getResourceId("1");
+        final var resourceId1 = getResourceId("1");
         final var resourceType = getResourceTypeId("1");
 
-        subscriptionCollection.remove(sessionId1, resourceType, resourceId);
-        subscriptionCollection.remove(sessionId2, resourceType, resourceId);
+        subscriptionCollection.insert(getSubscription("1", "2", "1"));
+        subscriptionCollection.insert(getSubscription("1", "3", "1"));
+
+        subscriptionCollection.remove(sessionId1, resourceType, null);
+        subscriptionCollection.remove(sessionId2, resourceType, resourceId1);
 
         final var subsBySessionId1 = subscriptionCollection.get(sessionId1);
         final var subsBySessionId2 = subscriptionCollection.get(sessionId2);

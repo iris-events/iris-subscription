@@ -40,4 +40,8 @@ public class SubscriptionManager {
     public void unsubscribe(String sessionId, String resourceType, String resourceId) {
         subscriptionCollection.remove(sessionId, resourceType, resourceId);
     }
+
+    public void unsubscribe(final String sessionId, final Resource resource) {
+        subscriptionCollection.remove(sessionId, resource.resourceType(), resource.resourceId());
+    }
 }

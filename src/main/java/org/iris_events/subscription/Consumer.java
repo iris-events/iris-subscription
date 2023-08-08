@@ -1,10 +1,13 @@
 package org.iris_events.subscription;
 
 import static org.iris_events.common.MessagingHeaders.Message.CACHE_TTL;
+import static org.iris_events.subscription.exception.ErrorCode.BAD_REQUEST;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Set;
 
+import org.iris_events.exception.BadPayloadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +32,7 @@ import org.iris_events.subscription.events.Unsubscribe;
 import org.iris_events.subscription.events.Unsubscribed;
 import org.iris_events.subscription.model.Resource;
 import org.iris_events.subscription.model.Subscription;
+
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -81,11 +85,22 @@ public class Consumer {
     @MessageHandler
     public Unsubscribed unsubscribe(final Unsubscribe unsubscribe) {
         log.info("Unsubscribe received: {}", unsubscribe);
+        final var resources = new ArrayList<Resource>();
+        if (unsubscribe.resourceType() != null) {
+            resources.add(new Resource(unsubscribe.resourceType(), unsubscribe.resourceId()));
+        }
+        if (unsubscribe.resources() != null) {
+            resources.addAll(unsubscribe.resources());
+        }
+
         final var sessionId = eventContext.getSessionId().orElse(null);
-        final var resourceType = unsubscribe.resourceType();
-        final var resourceId = unsubscribe.resourceId();
-        subscriptionManager.unsubscribe(sessionId, resourceType, resourceId);
-        return new Unsubscribed(resourceType, resourceId);
+        for (Resource resource : resources) {
+            if (resource.resourceType() == null) {
+                throw new BadPayloadException(BAD_REQUEST, "Missing resource type information");
+            }
+            subscriptionManager.unsubscribe(sessionId, resource);
+        }
+        return new Unsubscribed(resources);
     }
 
     @MessageHandler(bindingKeys = "*.resource")
