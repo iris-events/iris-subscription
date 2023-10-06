@@ -9,12 +9,12 @@
     </parent>
     <groupId>org.iris-events</groupId>
     <artifactId>iris-subscription</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.1</version>
     <scm>
         <connection>scm:git:git@github.com:iris-events/iris-subscription.git</connection>
         <developerConnection>scm:git:git@github.com:iris-events/iris-subscription.git</developerConnection>
         <url>https://github.com/iris-events/iris-subscription</url>
-        <tag>HEAD</tag>
+        <tag>v3.0.1</tag>
     </scm>
     <licenses>
         <license>
