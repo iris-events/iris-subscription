@@ -12,9 +12,9 @@
     <artifactId>iris-subscription</artifactId>
     <version>3.0.0-SNAPSHOT</version>
     <scm>
-        <connection>scm:git:git@github.com:iris-events/iris-router.git</connection>
-        <developerConnection>scm:git:git@github.com:iris-events/iris-router.git</developerConnection>
-        <url>https://github.com/iris-events/iris-router</url>
+        <connection>scm:git:git@github.com:iris-events/iris-subscription.git</connection>
+        <developerConnection>scm:git:git@github.com:iris-events/iris-subscription.git</developerConnection>
+        <url>https://github.com/iris-events/iris-subscription</url>
         <tag>HEAD</tag>
     </scm>
     <licenses>
