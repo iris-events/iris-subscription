@@ -10,11 +10,11 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.native-micro -t quarkus/iris-subscription .
+# docker build -f src/main/docker/Dockerfile.native-micro -t quarkus/iris-demo .
 #
 # Then run the container using:
 #
-# docker run -i --rm -p 8080:8080 quarkus/iris-subscription
+# docker run -i --rm -p 8080:8080 quarkus/iris-demo
 #
 ###
 FROM quay.io/quarkus/quarkus-micro-image:2.0

@@ -4,12 +4,12 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>40</version>
+        <version>44</version>
         <relativePath />
     </parent>
     <groupId>org.iris-events</groupId>
     <artifactId>iris-subscription</artifactId>
-    <version>3.0.3-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
     <scm>
         <connection>scm:git:git@github.com:iris-events/iris-subscription.git</connection>
         <developerConnection>scm:git:git@github.com:iris-events/iris-subscription.git</developerConnection>
@@ -24,13 +24,14 @@
         </license>
     </licenses>
     <properties>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.release>21</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
         <version.awaitility>4.2.0</version.awaitility>
-        <quarkus.platform.version>3.4.3</quarkus.platform.version>
-        <version.iris>5.0.0</version.iris>
+        <quarkus.platform.version>3.9.2</quarkus.platform.version>
+        <version.iris>6.1.0</version.iris>
+        <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -47,14 +48,29 @@
                 <version>${version.hamcrest-core}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>org.iris-events</groupId>
+                <artifactId>quarkus-iris</artifactId>
+                <version>${version.iris}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.iris-events</groupId>
+                <artifactId>iris-common</artifactId>
+                <version>${version.iris}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.iris-events</groupId>
+                <artifactId>iris-asyncapi</artifactId>
+                <version>${version.iris}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.iris-events</groupId>
             <artifactId>quarkus-iris</artifactId>
-            <version>5.0.7</version>
         </dependency>
+
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-redis-client</artifactId>
@@ -65,7 +81,24 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-opentelemetry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-logging-json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-messaging-rabbitmq</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

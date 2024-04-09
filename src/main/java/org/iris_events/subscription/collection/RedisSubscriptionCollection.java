@@ -209,7 +209,7 @@ public class RedisSubscriptionCollection implements SubscriptionCollection {
         try {
             return Optional.of(objectMapper.readValue(json, Subscription.class));
         } catch (JsonProcessingException e) {
-            log.error("Could not deserialize subscription json {}", json, e);
+            log.debug("Could not deserialize subscription json {}", json, e);
         }
         return Optional.empty();
     }

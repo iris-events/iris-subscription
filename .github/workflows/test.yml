@@ -1,0 +1,39 @@
+name: Test
+"on":
+  push:
+    branches:
+      - '**'
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch: null
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: run-tests
+    permissions:
+      packages: read
+    concurrency:
+      group: "${{ github.workflow }}-${{ github.ref }}"
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        java-version: [ 21 ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+          cache: maven
+          #overwrite-settings: false
+      - name: test with JDK ${{ matrix.java-version }}
+        shell: sh
+        run: mvn --batch-mode verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
