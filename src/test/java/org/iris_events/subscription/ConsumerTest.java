@@ -97,7 +97,6 @@ class ConsumerTest {
                     .exchangeType(ExchangeType.TOPIC)
                     .routingKey(routingKey)
                     .scope(Scope.SESSION)
-                    .sessionId(sessionId)
                     .subscriptionId(subscriptionId)
                     .build();
             final var payload = "a";
@@ -182,7 +181,6 @@ class ConsumerTest {
                     .exchangeType(ExchangeType.TOPIC)
                     .routingKey(RESOURCE_TYPE)
                     .scope(Scope.INTERNAL)
-                    .sessionId(sessionId)
                     .subscriptionId(subscriptionId)
                     .build();
             final var snapshotRequested = new SnapshotRequested(RESOURCE_TYPE, RESOURCE_ID);

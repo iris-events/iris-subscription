@@ -3,7 +3,6 @@ package org.iris_events.subscription;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -81,7 +80,6 @@ public class SubscriptionIntegrationTest {
                 .exchangeType(ExchangeType.TOPIC)
                 .routingKey(resourceType)
                 .scope(Scope.INTERNAL)
-                .sessionId(subscription.sessionId())
                 .subscriptionId(subscription.id())
                 .build();
 
@@ -98,7 +96,6 @@ public class SubscriptionIntegrationTest {
                 .exchangeType(ExchangeType.TOPIC)
                 .routingKey(routingKey)
                 .scope(Scope.SESSION)
-                .sessionId(subscription.sessionId())
                 .subscriptionId(subscription.id())
                 .build();
         inOrder.verify(eventProducer)
@@ -121,7 +118,6 @@ public class SubscriptionIntegrationTest {
                 .exchangeType(ExchangeType.TOPIC)
                 .routingKey(routingKey)
                 .scope(Scope.SESSION)
-                .sessionId(subscription.sessionId())
                 .subscriptionId(subscription.id())
                 .build();
 

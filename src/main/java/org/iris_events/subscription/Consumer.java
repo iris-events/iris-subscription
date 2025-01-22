@@ -4,7 +4,6 @@ import static org.iris_events.common.MessagingHeaders.Message.CACHE_TTL;
 import static org.iris_events.subscription.exception.ErrorCode.BAD_REQUEST;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Set;
 
 import org.iris_events.exception.BadPayloadException;
@@ -122,7 +121,6 @@ public class Consumer {
                     .exchangeType(ExchangeType.TOPIC)
                     .routingKey(routingKey)
                     .scope(Scope.SESSION)
-                    .sessionId(subscription.sessionId())
                     .subscriptionId(subscription.id())
                     .build();
             producer.sendResourceMessage(resourceType, resourceId, payloadAsBytes, routingDetails);
@@ -152,7 +150,6 @@ public class Consumer {
                     .exchangeType(ExchangeType.TOPIC)
                     .routingKey(routingKey)
                     .scope(Scope.SESSION)
-                    .sessionId(subscription.sessionId())
                     .subscriptionId(subscription.id())
                     .build();
             producer.sendResourceMessage(resourceType, resourceId, snapshot.message(), routingDetails);
@@ -171,7 +168,6 @@ public class Consumer {
                 .exchangeType(ExchangeType.TOPIC)
                 .routingKey(resourceType)
                 .scope(Scope.INTERNAL)
-                .sessionId(subscription.sessionId())
                 .subscriptionId(subscription.id())
                 .build();
         final var snapshotRequestedMessage = new SnapshotRequested(resourceType, resourceId);
