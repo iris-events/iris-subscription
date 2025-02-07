@@ -29,8 +29,8 @@
         <maven.compiler.release>21</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
         <version.awaitility>4.2.0</version.awaitility>
-        <quarkus.platform.version>3.17.7</quarkus.platform.version>
-        <version.iris>6.1.8</version.iris>
+        <quarkus.platform.version>3.15.3</quarkus.platform.version>
+        <version.iris>6.2.0</version.iris>
         <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
     <dependencyManagement>
