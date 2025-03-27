@@ -6,12 +6,6 @@ import static org.iris_events.subscription.exception.ErrorCode.BAD_REQUEST;
 import java.io.IOException;
 import java.util.Set;
 
-import org.iris_events.exception.BadPayloadException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.iris_events.annotations.ExchangeType;
 import org.iris_events.annotations.MessageHandler;
 import org.iris_events.annotations.Scope;
@@ -19,6 +13,7 @@ import org.iris_events.common.Exchanges;
 import org.iris_events.common.MessagingHeaders;
 import org.iris_events.common.message.ResourceMessage;
 import org.iris_events.context.EventContext;
+import org.iris_events.exception.BadPayloadException;
 import org.iris_events.producer.RoutingDetails;
 import org.iris_events.subscription.collection.RedisSnapshotCollection;
 import org.iris_events.subscription.collection.Snapshot;
@@ -31,7 +26,10 @@ import org.iris_events.subscription.events.Unsubscribe;
 import org.iris_events.subscription.events.Unsubscribed;
 import org.iris_events.subscription.model.Resource;
 import org.iris_events.subscription.model.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -101,7 +99,7 @@ public class Consumer {
         final var resourceId = resourceMessage.resourceId();
         final var payloadAsBytes = objectMapper.writeValueAsBytes(resourceMessage.payload());
         final var eventName = eventContext.getHeaderValue(MessagingHeaders.Message.EVENT_TYPE)
-                .orElseThrow(() -> new RuntimeException("Missing required event type header!"));
+                                      .orElseThrow(() -> new RuntimeException("Missing required event type header!"));
         final var routingKey = String.format("%s.%s", eventName, Exchanges.SESSION.getValue());
         final var snapshot = new Snapshot(eventName, routingKey, payloadAsBytes);
 
@@ -116,13 +114,14 @@ public class Consumer {
 
         subscriptions.forEach(subscription -> {
             final var routingDetails = new RoutingDetails.Builder()
-                    .eventName(eventName)
-                    .exchange(Exchanges.SESSION.getValue())
-                    .exchangeType(ExchangeType.TOPIC)
-                    .routingKey(routingKey)
-                    .scope(Scope.SESSION)
-                    .subscriptionId(subscription.id())
-                    .build();
+                                               .eventName(eventName)
+                                               .exchange(Exchanges.SESSION.getValue())
+                                               .exchangeType(ExchangeType.TOPIC)
+                                               .routingKey(routingKey)
+                                               .scope(Scope.SESSION)
+                                               .subscriptionId(subscription.id())
+                                               .sessionId(subscription.sessionId())
+                                               .build();
             producer.sendResourceMessage(resourceType, resourceId, payloadAsBytes, routingDetails);
         });
     }
@@ -145,13 +144,13 @@ public class Consumer {
             final var routingKey = snapshot.routingKey();
 
             final var routingDetails = new RoutingDetails.Builder()
-                    .eventName(eventName)
-                    .exchange(Exchanges.SESSION.getValue())
-                    .exchangeType(ExchangeType.TOPIC)
-                    .routingKey(routingKey)
-                    .scope(Scope.SESSION)
-                    .subscriptionId(subscription.id())
-                    .build();
+                                               .eventName(eventName)
+                                               .exchange(Exchanges.SESSION.getValue())
+                                               .exchangeType(ExchangeType.TOPIC)
+                                               .routingKey(routingKey)
+                                               .scope(Scope.SESSION)
+                                               .subscriptionId(subscription.id())
+                                               .build();
             producer.sendResourceMessage(resourceType, resourceId, snapshot.message(), routingDetails);
         }
 
@@ -163,13 +162,13 @@ public class Consumer {
         final var resourceId = subscription.resourceId();
         final var exchangeName = Exchanges.SNAPSHOT_REQUESTED.getValue();
         final var routingDetails = new RoutingDetails.Builder()
-                .eventName(exchangeName)
-                .exchange(exchangeName)
-                .exchangeType(ExchangeType.TOPIC)
-                .routingKey(resourceType)
-                .scope(Scope.INTERNAL)
-                .subscriptionId(subscription.id())
-                .build();
+                                           .eventName(exchangeName)
+                                           .exchange(exchangeName)
+                                           .exchangeType(ExchangeType.TOPIC)
+                                           .routingKey(resourceType)
+                                           .scope(Scope.INTERNAL)
+                                           .subscriptionId(subscription.id())
+                                           .build();
         final var snapshotRequestedMessage = new SnapshotRequested(resourceType, resourceId);
         final var payloadAsBytes = objectMapper.writeValueAsBytes(snapshotRequestedMessage);
         producer.sendResourceMessage(resourceType, resourceId, payloadAsBytes, routingDetails);
