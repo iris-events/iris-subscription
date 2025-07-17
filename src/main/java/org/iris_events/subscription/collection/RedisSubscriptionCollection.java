@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Map;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.iris_events.subscription.model.Resource;
@@ -89,6 +90,8 @@ public class RedisSubscriptionCollection implements SubscriptionCollection {
         final var sessionSubscriptionsSetId = Utils.getSessionSubscriptionsSetId(sessionId);
         final var sessionSubscriptionIds = redisClient.smembers(sessionSubscriptionsSetId).stream().map(Response::toString)
                 .toList();
+
+        removeFromResourceIndexes(sessionSubscriptionIds);
         final var idsToRemove = Stream.concat(Stream.of(sessionSubscriptionsSetId), sessionSubscriptionIds.stream()).toList();
         redisClient.del(idsToRemove);
     }
@@ -152,6 +155,26 @@ public class RedisSubscriptionCollection implements SubscriptionCollection {
     public void cleanUp() {
         cleanSubscriptionPointers(RESOURCE_SUB_TEMPLATE);
         cleanSubscriptionPointers(SESSION_SUB_TEMPLATE);
+    }
+
+    private void removeFromResourceIndexes(final List<String> subscriptionIds) {
+        // Group operations by resource set key to batch them
+        Map<String, List<String>> removalsByResourceSet = subscriptionIds.stream()
+                .filter(Utils::isValidSubscriptionId)
+                .collect(Collectors.groupingBy(Utils::getResourceSetKey));
+
+        // Execute batched removals
+        for (Map.Entry<String, List<String>> entry : removalsByResourceSet.entrySet()) {
+            String resourceSetKey = entry.getKey();
+            List<String> subscriptionsToRemove = entry.getValue();
+
+            List<String> sremArgs = new ArrayList<>(subscriptionsToRemove.size() + 1);
+            sremArgs.add(resourceSetKey);
+            sremArgs.addAll(subscriptionsToRemove);
+
+            redisClient.srem(sremArgs);
+        }
+
     }
 
     private void cleanSubscriptionPointers(String subTemplate) {

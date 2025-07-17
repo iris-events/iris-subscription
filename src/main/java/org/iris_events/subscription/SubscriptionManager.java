@@ -19,7 +19,7 @@ public class SubscriptionManager {
         this.subscriptionCollection = subscriptionCollection;
     }
 
-    @Scheduled(every = "PT12H")
+    @Scheduled(every = "${subscription.cleanup.interval}")
     public void cleanup() {
         this.subscriptionCollection.cleanUp();
     }
