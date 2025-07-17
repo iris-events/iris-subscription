@@ -1,6 +1,6 @@
 package org.iris_events.subscription.collection;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.Collections;
@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import io.vertx.redis.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -111,6 +112,97 @@ public class RedisSubscriptionCollectionTest {
 
         assertThat(bySessionId.size(), is(0));
         assertThat(size, is(2));
+    }
+
+    @Test
+    void testBatchedRemovalByResourceSet() {
+        final var resourceType = "sharedResourceType";
+        final var resourceId = "sharedResourceId";
+
+        subscriptionCollection.insert(new Subscription(resourceType, resourceId, "session1"));
+        subscriptionCollection.insert(new Subscription(resourceType, resourceId, "session2"));
+        subscriptionCollection.insert(new Subscription(resourceType, resourceId, "session3"));
+
+        subscriptionCollection.insert(new Subscription("otherType", "otherId", "session1"));
+
+        assertThat(subscriptionCollection.size(), is(8)); // 4 original + 4 new
+
+        // Remove session1 (should remove 2 subscriptions)
+        subscriptionCollection.remove("session1");
+
+        // Verify results
+        assertThat(subscriptionCollection.size(), is(6)); // 8 - 2 = 6
+        assertThat(subscriptionCollection.get("session1").size(), is(0));
+        assertThat(subscriptionCollection.get(new Resource(resourceType, resourceId)).size(), is(2)); // session2, session3
+    }
+
+    @Test
+    void testRemovalFromResourceSets() {
+        // Setup: Create subscriptions
+        final var sessionId = getSessionId("1");
+        final var resourceType = getResourceTypeId("1");
+        final var resourceId = getResourceId("1");
+
+        subscriptionCollection.insert(getSubscription("1", "1", "1"));
+        subscriptionCollection.insert(getSubscription("1", "1", "2")); // Same resource, different session
+
+        // Verify setup: Both subscriptions should be in the resource set
+        final var resourceSetKey = Utils.getResourceSubscriptionsSetId(resourceType, resourceId);
+        final var subscriptionsInSet = redisClient.smembers(resourceSetKey);
+        assertThat(subscriptionsInSet.size(), is(2));
+
+        // Remove session1
+        subscriptionCollection.remove(sessionId);
+
+        // Verify: Only session1's subscription should be removed from resource set
+        final var subscriptionsAfterRemoval = redisClient.smembers(resourceSetKey);
+        assertThat(subscriptionsAfterRemoval.size(), is(1));
+
+        // Verify the remaining subscription belongs to session2
+        final var remainingSubscription = subscriptionsAfterRemoval.stream()
+                .map(Response::toString)
+                .findFirst()
+                .orElse("");
+        assertThat(remainingSubscription, containsString("sessionId2"));
+    }
+
+    @Test
+    void testRemovalFromMultipleResourceSets() {
+        final var sessionId = getSessionId("1");
+
+        // Session1 has subscriptions to 2 different resources
+        subscriptionCollection.insert(getSubscription("1", "1", "1")); // resource1
+        subscriptionCollection.insert(getSubscription("2", "2", "1")); // resource2
+
+        // Other sessions also have subscriptions to these resources
+        subscriptionCollection.insert(getSubscription("1", "1", "2")); // resource1
+        subscriptionCollection.insert(getSubscription("2", "2", "3")); // resource2
+
+        // Get resource set keys
+        final var resourceSet1Key = Utils.getResourceSubscriptionsSetId(getResourceTypeId("1"), getResourceId("1"));
+        final var resourceSet2Key = Utils.getResourceSubscriptionsSetId(getResourceTypeId("2"), getResourceId("2"));
+
+        // Verify setup: Each resource set should have 2 subscriptions
+        assertThat(redisClient.smembers(resourceSet1Key).size(), is(2));
+        assertThat(redisClient.smembers(resourceSet2Key).size(), is(2));
+
+        // Remove session1
+        subscriptionCollection.remove(sessionId);
+
+        // Verify: Session1's subscriptions removed from both resource sets
+        assertThat(redisClient.smembers(resourceSet1Key).size(), is(1));
+        assertThat(redisClient.smembers(resourceSet2Key).size(), is(1));
+
+        // Verify remaining subscriptions don't belong to session1
+        final var remaining1 = redisClient.smembers(resourceSet1Key).stream()
+                .map(Response::toString)
+                .findFirst().orElse("");
+        final var remaining2 = redisClient.smembers(resourceSet2Key).stream()
+                .map(Response::toString)
+                .findFirst().orElse("");
+
+        assertThat(remaining1, not(containsString("sessionId1")));
+        assertThat(remaining2, not(containsString("sessionId1")));
     }
 
     @Test
